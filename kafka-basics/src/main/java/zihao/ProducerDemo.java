@@ -1,4 +1,4 @@
-package zihao.tutorial1;
+package zihao;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;

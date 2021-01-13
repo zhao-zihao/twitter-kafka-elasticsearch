@@ -1,4 +1,4 @@
-package com.github.zihao.tutorial4;
+package com.github.zihao.stream;
 
 public class StreamsFilterTweets {
 

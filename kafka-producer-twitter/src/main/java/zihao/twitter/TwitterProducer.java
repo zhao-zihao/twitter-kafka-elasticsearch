@@ -1,4 +1,4 @@
-package zihao.tutorial2;
+package zihao.twitter;
 
 import com.google.common.collect.Lists;
 import com.twitter.hbc.ClientBuilder;
@@ -21,19 +21,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class TwitterProducerSafe {
-    private static Logger logger = LogManager.getLogger(TwitterProducerSafe.class.getName());
+public class TwitterProducer {
+    private static Logger logger = LogManager.getLogger(TwitterProducer.class.getName());
 
     String consumerKey = "sPQbbfr4s4hfoiitOVOctPY7R";
     String consumerSecret = "FZmBSDbAIYpfB1GNk4Hr9CvBb3wbHsUFe4PG3L22cx3rHQBovz";
     String token = "739563437538304001-6YJ7BZmPC2Uk4dCW5Z6otiLOdCxeVuG";
     String secret = "uTCb8zPcd0nNr9JXrC8EfCxYrPlBI4KQgtVY0NfSgmUm6";
-    List<String> terms = Lists.newArrayList("bitcoin", "weather", "home");
+    List<String> terms = Lists.newArrayList("bitcoin");
 
-    public TwitterProducerSafe() {}
+    public TwitterProducer() {}
 
     public static void main(String[] args) {
-        new TwitterProducerSafe().run();
+        new TwitterProducer().run();
     }
 
     public void run() {
@@ -118,17 +118,6 @@ public class TwitterProducerSafe {
         properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-
-        // create safe Producer
-        properties.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
-        properties.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-        properties.setProperty(ProducerConfig.RETRIES_CONFIG, Integer.toString(Integer.MAX_VALUE));
-        properties.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5");
-
-        // high throughput producer (at the expense of a bit of latency and CPU usage)
-        properties.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
-        properties.setProperty(ProducerConfig.LINGER_MS_CONFIG, "20");
-        properties.setProperty(ProducerConfig.BATCH_SIZE_CONFIG, Integer.toString(32*1024));
 
         // create the producer
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);

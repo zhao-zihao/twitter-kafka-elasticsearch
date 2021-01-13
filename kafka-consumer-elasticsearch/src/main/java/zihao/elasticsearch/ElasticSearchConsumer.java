@@ -1,4 +1,4 @@
-package zihao.tutorial3;
+package zihao.elasticsearch;
 
 import com.google.gson.JsonParser;
 import org.apache.http.HttpHost;
@@ -13,8 +13,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -28,7 +26,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
 
-public class ElasticSearchConsumerBatch {
+public class ElasticSearchConsumer {
 
     private static JsonParser jsonParser = new JsonParser();
 
@@ -83,7 +81,7 @@ public class ElasticSearchConsumerBatch {
     }
 
     public static void main(String[] args) throws IOException {
-        Logger logger = LogManager.getLogger(ElasticSearchConsumerBatch.class.getName());
+        Logger logger = LogManager.getLogger(ElasticSearchConsumer.class.getName());
 
         RestHighLevelClient client = createClient();
 //        String jsonString = "{ \"foo\": \"bar\" }";
@@ -95,41 +93,32 @@ public class ElasticSearchConsumerBatch {
             ConsumerRecords<String, String> records =
                     consumer.poll(Duration.ofMillis(100));  // new in Kafka 2.0.0
 
-            Integer recordCount = records.count();
-            logger.info("Received " + recordCount + " records");
-
-            BulkRequest bulkRequest = new BulkRequest();
-
+            logger.info("Received " + records.count() + " records");
             for (ConsumerRecord<String, String> record : records) {
                 // 2 strategies
-                // 1. kafka generic ID
+                // kafka generic ID
                 // String id = record.topic() + "_" + record.partition() + "_" + record.offset();
 
-                try {
-                    // 2. twitter feed specific id
-                    String id = extractIdFromTweet(record.value());
+                // twitter feed specific id
+                String id = extractIdFromTweet(record.value());
 
-                    IndexRequest indexRequest = new IndexRequest(
-                            "twitter",
-                            "tweets",
-                            id // this is to make our consumer idempotent
-                    ).source(record.value(), XContentType.JSON);
+                IndexRequest indexRequest = new IndexRequest(
+                        "twitter",
+                        "tweets",
+                        id // this is to make our consumer idempotent
+                ).source(record.value(), XContentType.JSON);
 
-                    bulkRequest.add(indexRequest); // we add to our bulk request (takes no time)
-                } catch (NullPointerException e) {
-                    logger.warn("skipping bad data: " + record.value());
-                }
+                // insert data into elasticsearch
+                IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+                logger.info(indexResponse.getId());
             }
-            if (recordCount > 0) {
-                BulkResponse bulkItemResponses = client.bulk(bulkRequest, RequestOptions.DEFAULT);
-                logger.info("Commiting offsets...");
-                consumer.commitSync();
-                logger.info("Offsets have been committed.");
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            logger.info("Commiting offsets...");
+            consumer.commitSync();
+            logger.info("Offsets have been committed.");
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 

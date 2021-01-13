@@ -1,4 +1,4 @@
-package zihao.tutorial1;
+package zihao;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
